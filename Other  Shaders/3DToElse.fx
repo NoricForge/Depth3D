@@ -21,9 +21,9 @@
 
 uniform int SbS_Half_Full <
 	ui_type = "combo";
-	ui_items = "Off\0Full in/Half out\0Half in/Full out\0";
+	ui_items = "Off\0Full in/Half out\0Half in/Full out\0Double in/Full out\0";
 	ui_label = "Half / Full";
-	ui_tooltip = "Switch Aspect Ratio From Half/Full in to Full/Half out for Side by Side Video.";
+	ui_tooltip = "Switch Aspect Ratio From Half in to Full out, Full in to Half out, or Double in to centered Full out for Side by Side Video.";
 	ui_category = "Stereoscopic Conversion";
 > = 0;
 
@@ -150,12 +150,28 @@ float fmod(float a, float b)
 //Stereo Texture grabber
 float4 BB_Texture(float2 TC)
 {
-	if(Stereoscopic_Mode_Input == 1)
-		TC.y = (SbS_Half_Full == 1) ? TC.y * 0.5 + 0.25 : TC.y;
-		TC.y = (SbS_Half_Full == 2) ? TC.y * 2.0 - 0.5 : TC.y;
-		if (TC.y < 0.0 || TC.y > 1.0)
-			return float4(0,0,0,0);
-				
+	if(Stereoscopic_Mode_Input == 1){
+		if(SbS_Half_Full == 1 || SbS_Half_Full == 2){
+			TC.y = (SbS_Half_Full == 1) ? TC.y * 0.5 + 0.25 : TC.y;
+			TC.y = (SbS_Half_Full == 2) ? TC.y * 2.0 - 0.5 : TC.y;
+			if (TC.y < 0.0 || TC.y > 1.0){
+				return float4(0,0,0,0);
+			}
+		}
+		if(SbS_Half_Full == 3){
+			if( TC.x <= 0.5){
+				TC.x = TC.x * 2.0 - 0.25;
+				if (TC.x < 0.0 || TC.x > 0.5){
+					return float4(0,0,0,0);}
+			}
+			if( TC.x > 0.5){
+				TC.x = TC.x * 2.0 - 0.75;
+				if (TC.x < 0.5 || TC.x > 1.0){
+					return float4(0,0,0,0);}	
+			}
+		}
+	}
+	
 	float4 Color = tex2Dlod(BackBuffer, float4(TC,0,0) ), Exp_Darks, Exp_Brights;
 	        	 
 	float3 AdaptColor = tex2Dlod(BackBuffer, float4(TC,0,0) ).rgb;
